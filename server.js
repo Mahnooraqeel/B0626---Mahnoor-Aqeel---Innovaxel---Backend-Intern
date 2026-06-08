@@ -211,6 +211,9 @@ app.delete("/api/registrations/:id", async (req, res) => {
       return res.status(400).json({ error: "This registration is already cancelled." });
     }
 
+    reg.status = "cancelled";
+    reg.cancelled_at = new Date().toISOString();
+    
     const event = db.events.find((e) => e.id === reg.event_id);
     if (event) {
       event.available_seats += 1;                               // Increment available seats for the event when a registration is cancelled.
