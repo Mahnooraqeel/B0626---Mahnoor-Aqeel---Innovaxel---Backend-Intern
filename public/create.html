@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Event</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="create.html">Create Event</a>
+    <a href="register.html">Register</a>
+    <a href="view.html">View Events</a>
+    <a href="cancel.html">Cancel Registration</a>
+  </nav>
+
+  <h1>Create Event</h1>
+
+  <div class="form-box">
+    <div class="field">
+      <label>Event Name</label>
+      <input type="text" id="name" placeholder="e.g. Water Fun Day">
+    </div>
+    <div class="field">
+      <label>Total Seats</label>
+      <input type="number" id="seats" min="1" placeholder="e.g. 50">
+    </div>
+    <div class="field">
+      <label>Event Date &amp; Time</label>       
+      <input type="datetime-local" id="date">   
+    </div>
+
+    <button type="button" onclick="submitForm()">Create Event</button>
+    <div id="msg" class="msg" style="display:none;"></div>
+  </div>
+
+  <script>
+    async function submitForm() {
+      const name       = document.getElementById("name").value.trim();
+      const total_seats = Number(document.getElementById("seats").value);
+      const event_date  = document.getElementById("date").value;
+
+      if (!name || !total_seats || !event_date) {
+        return showMsg("Please fill in all fields.", "error");
+      }
+
+      const res  = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, total_seats, event_date })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showMsg("Event created successfully : " + data.event.name, "success");
+        document.getElementById("name").value  = "";
+        document.getElementById("seats").value = "";
+        document.getElementById("date").value  = "";
+      } else {
+        showMsg(data.error, "error");
+      }
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.textContent = text;
+      el.className = "msg " + type;
+      el.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>

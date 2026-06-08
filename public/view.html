@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>View Events</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="create.html">Create Event</a>
+    <a href="register.html">Register</a>
+    <a href="view.html">View Events</a>
+    <a href="cancel.html">Cancel Registration</a>
+  </nav>
+
+  <h1>Upcoming Events</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Event Name</th>
+        <th>Date &amp; Time</th>
+        <th>Total Seats</th>
+        <th>Registered</th>
+        <th>Available</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody id="eventTable">
+      <tr><td colspan="6"></td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    window.onload = loadEvents;
+
+    async function loadEvents() {
+      // Always call same endpoint 
+      const res = await fetch("/api/events");
+      const data = await res.json();
+
+      const tbody = document.getElementById("eventTable");
+      tbody.innerHTML = "";
+
+      if (data.events.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No upcoming events found.</td></tr>';
+        return;
+      }
+
+      data.events.forEach(ev => {
+        const tr = document.createElement("tr");
+
+        const dateStr = new Date(ev.event_date).toLocaleString();
+
+        const badge = ev.available_seats === 0
+          ? '<span class="badge full">FULL</span>'
+          : '<span class="badge open">OPEN</span>';
+
+        tr.innerHTML = `
+          <td>${ev.name}</td>
+          <td>${dateStr}</td>
+          <td>${ev.total_seats}</td>
+          <td>${ev.total_registrations}</td>
+          <td>${ev.available_seats}</td>
+          <td>${badge}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cancel Registration</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="create.html">Create Event</a>
+    <a href="register.html">Register</a>
+    <a href="view.html">View Events</a>
+    <a href="cancel.html">Cancel Registration</a>
+  </nav>
+
+  <h1>Cancel a Registration</h1>
+  <p>Click Cancel to remove your registration.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>User Name</th>
+        <th>Event</th>
+        <th>Registered At</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="regTable">
+      <tr><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+
+  <div id="msg" class="msg" style="display:none;"></div>
+
+  <script>
+    
+    window.onload = loadRegistrations;
+
+    async function loadRegistrations() {
+      // Fetch all active registrations
+      const res = await fetch("/api/registrations");
+      const data = await res.json();
+      const tbody = document.getElementById("regTable");
+
+      tbody.innerHTML = "";
+
+      if (data.registrations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">No active registrations found.</td></tr>';
+        return;
+      }
+
+      // Build one table row per registration
+      data.registrations.forEach(reg => {
+        const tr = document.createElement("tr");
+
+        // Format the registration timestamp nicely
+        const regDate = new Date(reg.registered_at).toLocaleString();
+
+        tr.innerHTML = `
+          <td>${reg.user_name}</td>
+          <td>${reg.event_name}</td>
+          <td>${regDate}</td>
+          <td>
+            <button class="btn-cancel" onclick="cancelReg('${reg.id}')">Cancel</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function cancelReg(regId) {
+      
+      if (!confirm("Are you sure you want to cancel this registration?")) return;
+
+      const res = await fetch("/api/registrations/" + regId, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showMsg("Your registration has been cancelled.", "success");
+        // Reload table so cancelled entry disappears
+        loadRegistrations();
+      } else {
+        showMsg(data.error, "error");
+      }
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.textContent = text;
+      el.className = "msg " + type;
+      el.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>

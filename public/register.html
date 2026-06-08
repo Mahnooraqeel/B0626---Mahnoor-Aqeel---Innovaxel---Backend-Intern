@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register for Event</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="create.html">Create Event</a>
+    <a href="register.html">Register</a>
+    <a href="view.html">View Events</a>
+    <a href="cancel.html">Cancel Registration</a>
+  </nav>
+
+  <h1>Register for an Event</h1>
+
+  <div class="form-box">
+    <div class="field">
+      <label for="user_name">Your Name</label>
+      <input type="text" id="user_name" placeholder="e.g. Ahmed Khan">
+    </div>
+
+    <div class="field">
+      <label for="event_id">Select Event</label>
+      <!-- Dropdown is populated from the API when page loads -->
+      <select id="event_id">
+        <option value=""></option>
+      </select>
+    </div>
+
+    <button type="submit" onclick="register()">Register</button>
+
+    <div id="msg" class="msg" style="display:none;"></div>
+  </div>
+
+  <script>
+    // Load events when the page opens
+    window.onload = loadEvents;
+
+    async function loadEvents() {
+      // Fetch only upcoming events for registration
+      const res = await fetch("/api/events?upcoming=true&sort=date");
+      const data = await res.json();
+
+      const select = document.getElementById("event_id");
+      select.innerHTML = ""; 
+
+      if (data.events.length === 0) {
+        select.innerHTML = '<option value="">No upcoming events available</option>';
+        return;
+      }
+
+      // Add each event as an option
+      data.events.forEach(ev => {
+        const option = document.createElement("option");
+        option.value = ev.id;
+
+        // Format date for display
+        const dateStr = new Date(ev.event_date).toLocaleString();
+
+        // Show available seats so user knows if it's almost full
+        const seatInfo = ev.available_seats === 0
+          ? "FULL"
+          : ev.available_seats + " seats left";
+
+        option.textContent = `${ev.name} — ${dateStr} (${seatInfo})`;
+
+        // Disable the option if the event is full
+        if (ev.available_seats === 0) {
+          option.disabled = true;
+        }
+
+        select.appendChild(option);
+      });
+    }
+
+    async function register() {
+      const user_name = document.getElementById("user_name").value.trim();
+      const event_id = document.getElementById("event_id").value;
+
+      if (!user_name || !event_id) {
+        showMsg("Please enter your name and select an event.", "error");
+        return;
+      }
+
+      const res = await fetch("/api/registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_name, event_id })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showMsg("Registered successfully for: " + data.registration.event_name, "success");
+        document.getElementById("user_name").value = "";
+        // Reload events to update seat counts
+        loadEvents();
+      } else {
+        showMsg(data.error, "error");
+      }
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.textContent = text;
+      el.className = "msg " + type;
+      el.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
